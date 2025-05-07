@@ -94,20 +94,7 @@ def create_install_media(installer_app, temp_volume):
         print(f"[ERROR] createinstallmedia 执行失败: {' '.join(e.cmd)}")
         sys.exit(1)
 
-def compress_dmg(input_dmg, output_dmg):
-    print("[INFO] 正在压缩生成 Installer.dmg ...")
-    try:
-        subprocess.run([
-            "hdiutil", "convert", input_dmg,
-            "-format", "UDZO",
-            "-o", output_dmg
-        ], check=True)
-        print(f"[SUCCESS] 生成压缩镜像: {output_dmg}")
-    except subprocess.CalledProcessError as e:
-        print(f"[ERROR] hdiutil convert 压缩失败: {' '.join(e.cmd)}")
-        sys.exit(1)
-
-def convert_dmg_to_iso(input_dmg, iso_path):
+def convert_dmg_to_iso(temp_dmg, iso_path):
     cdr_path = iso_path + ".cdr"
     if os.path.exists(cdr_path):
         os.remove(cdr_path)
@@ -117,7 +104,7 @@ def convert_dmg_to_iso(input_dmg, iso_path):
 
     try:
         subprocess.run([
-            "hdiutil", "convert", input_dmg,
+            "hdiutil", "convert", temp_dmg,
             "-format", "UDTO",
             "-o", cdr_path
         ], check=True)
@@ -127,7 +114,7 @@ def convert_dmg_to_iso(input_dmg, iso_path):
 
     try:
         os.rename(cdr_path, iso_path)
-        print(f"[SUCCESS] ISO 镜像已生成: {iso_path}")
+        print(f"[SUCCESS] ISO 镜像已生成...")
     except Exception as e:
         print(f"[ERROR] 重命名失败: {e}")
         print(f"请手动执行：mv {cdr_path} {iso_path}")
@@ -155,19 +142,17 @@ if __name__ == "__main__":
     os.makedirs(output_dir, exist_ok=True)
 
     temp_dmg = os.path.join(output_dir, f"Temp_{installer_name}.dmg")
-    final_dmg = os.path.join(output_dir, f"{installer_name}.dmg")
-    iso_path = os.path.join(output_dir, f"{installer_name}.iso")
     temp_volume = "InstallVolume"
+    iso_path = os.path.join(output_dir, f"{installer_name}.iso")
 
     try:
-        cleanup([temp_dmg, final_dmg, iso_path])
+        cleanup([temp_dmg, iso_path])
         create_temp_dmg(installer_app, temp_dmg, temp_volume)
         attach_dmg(temp_dmg, temp_volume)
         create_install_media(installer_app, temp_volume)
         detach_volume(temp_volume)
         detach_volume(installer_name)
-        compress_dmg(temp_dmg, final_dmg)
-        convert_dmg_to_iso(final_dmg, iso_path)
+        convert_dmg_to_iso(temp_dmg, iso_path)
         cleanup([temp_dmg])
     except KeyboardInterrupt:
         print("\n[INFO] 检测到用户中断 (Ctrl+C)，准备清理资源...")
