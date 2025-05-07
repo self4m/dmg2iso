@@ -46,7 +46,7 @@ def get_installer_size(installer_path):
 
 def create_temp_dmg(installer_path, dmg_path, volume_name):
     installer_size_gb = get_installer_size(installer_path)
-    dmg_size_gb = math.ceil(installer_size_gb * 1.1)
+    dmg_size_gb = math.ceil(installer_size_gb * 1.2)
     dmg_size = f"{dmg_size_gb}g"
     print(f"[INFO] 安装器大小：{installer_size_gb:.2f} GB，创建临时卷 .dmg 文件大小：{dmg_size}")
 
